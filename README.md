@@ -1,2 +1,3 @@
 # ProactorAI
-Anonymized and approved public version of a network monitoring tool, developed for the BC Government
+Anonymized public version of a network monitoring tool for the BC Government (CITZ).
+Developed by me, Sofiia Khutorna, and Tariq Chatur in Summer 2024.
