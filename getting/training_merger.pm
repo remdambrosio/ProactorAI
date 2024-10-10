@@ -1,4 +1,3 @@
-#
 # Title: training_merger.pm
 # Authors: Sofiia Khutorna, Rem D'Ambrosio
 # Created: 2024-06-06
@@ -70,7 +69,7 @@ sub read_raw_alpha {
         print("...Merging from " . $filename . "...\n");
 
         my $path = $raw_dir . $filename;
-        my $alpha = $self->csv_file_to_list($path); # test if works !!!!
+        my $alpha = $self->csv_file_to_list($path); 
 
         my $prev_name = "";
         my $temp_total = 0;
@@ -91,8 +90,8 @@ sub read_raw_alpha {
                 next;
             }
             my $name = lc($line[0]);
-            if ($name =~ /^[^-]+-.*-[^-]+$/) {
-                if ( !($name =~ /^[a-zA-z]{3}s/) ) {                        # if not a switch, skip
+            if ($name =~ /^regex$/) {
+                if ( !($name =~ /^switch_regex/) ) {                        # if not a switch, skip
                     next;
                 }
 
@@ -128,30 +127,30 @@ sub read_raw_alpha {
                 }
                 
 
-                my ($model, $stat) = $line[2] =~ /^([^\.]+)\.(.+)$/;
+                my ($model, $stat) = $line[2] =~ /^regex$/;
                     
-                if ($model =~ /^ANON_MODEL_C/) {
-                    $self->{raw_alpha}{$name}{model} = "anon_model_c";
-                } elsif ($model =~ /^ANON_MODEL_J/) { 
-                    $self->{raw_alpha}{$name}{model} = "anon_model_j";
+                if ($model =~ /^CISCO/) {
+                    $self->{raw_alpha}{$name}{model} = "cisco";
+                } elsif ($model =~ /^JUNIPER/) { 
+                    $self->{raw_alpha}{$name}{model} = "juniper";
                 }
 
                 my $value = $line[4];
 
                 if ($value) {
-                    if ($stat eq "jnxOperatingCPU" || $stat eq "cpmCore1min") {
+                    if ($stat eq "cpu" || $stat eq "other_cpu") {
                         $cpu_count++;
                         $cpu_total += $value;
                         if ($value > $cpu_max) {
                             $cpu_max = $value;
                         }
-                    } elsif ($stat eq "jnxOperatingTemp" || $stat eq "entSensorValue") {
+                    } elsif ($stat eq "temp" || $stat eq "temperature") {
                         $temp_count++;
                         $temp_total += $value;
                         if ($value > $temp_max) {
                             $temp_max = $value;
                         }
-                    } elsif ($stat eq "icmpRtt") {
+                    } elsif ($stat eq "latency") {
                         if ($group == 0) {
                             $self->{raw_alpha}{$prev_name}{ping_latency_avg}{$file_number} = $value;
                         } elsif ($group == 1) {
@@ -215,8 +214,8 @@ sub read_alpha_logs {
         foreach my $line (@{$logs}) {
             my @line = @$line;
             my $name = lc($line[1]);
-            if ($name =~ /^[^-]+-.*-[^-]+$/) {
-                if ( !($name =~ /^[a-zA-z]{3}s/) ) {               # if not a switch, skip
+            if ($name =~ /^regex$/) {
+                if ( !($name =~ /^switch_regex/) ) {               # if not a switch, skip
                     next;
                 }
 
@@ -292,11 +291,10 @@ sub csv_file_to_list {
 # Example use: training_merger->merge_alpha()
 # Description:
 #     use alpha raw data to populate Site and Router objects
-# Parameters:
+# Parameters: 
 #     none
 # Return:
 #     none
-#
 sub merge_alpha {
     my $self = shift;
     my $raw_alpha = $self->{raw_alpha};
@@ -304,10 +302,10 @@ sub merge_alpha {
     print("...Merging alpha data into objects...\n");
     
     foreach my $dev_key (keys %$raw_alpha) {
-        if ($dev_key =~ /^([^-]+)-.*-([^-]+)$/) {
+        if ($dev_key =~ /^regex$/) {
             my $device_name = $1;
             my $site_code = $2;
-            my $device_type = ($device_name =~ /^.{3}([a-z]{2})/)[0];           # grab two characters from device name that define device type
+            my $device_type = ($device_name =~ /^regex/)[0];                    # grab two characters from device name that define device type
           
             if (!exists($self->{sites_hash}{$site_code})) {                     # if the site does not exist, create a new one
                 my %new_site_params = (
@@ -320,14 +318,14 @@ sub merge_alpha {
 
             if ($device_type) {
                 # check if router
-                if ($device_type =~ /^r./) {
+                if ($device_type =~ /^regex/) {
                     $self->create_router($device_name, $site_code, $self->{raw_alpha}{$dev_key}{ping_state});
                     my %updated_params = (
                         routers => [$device_name]
                     );
                     $self->{sites_hash}{$site_code}->update_site(\%updated_params);  # add router name to the existing site
                 # check if switch
-                } elsif ($device_type =~ /^s./) {
+                } elsif ($device_type =~ /^regex/) {
                     $self->create_switch(   $device_name, 
                                             $self->{raw_alpha}{$dev_key}{model},
                                             $site_code,
@@ -346,7 +344,7 @@ sub merge_alpha {
                     );
                     $self->{sites_hash}{$site_code}->update_site(\%updated_params);  # add switch name to the existing site
                 # check if AP
-                } elsif ($device_type =~ /^a./) {
+                } elsif ($device_type =~ /^regex/) {
                     $self->create_ap($device_name, $site_code, $self->{raw_alpha}{$dev_key}{ping_state});
                     my %updated_params = (
                         aps => [$device_name]
@@ -359,7 +357,6 @@ sub merge_alpha {
     } 
     return;
 }
-
 
 # Subroutine Name: create_router
 # Example use: training_merger->create_router($device_name, $site_code, $ping)
@@ -442,7 +439,7 @@ sub create_ap {
     $self->{aps_hash}{$ap_name} = $new_ap; 
     return;
 }
-
+  
 
 # Subroutine Name: create_starlink
 # Example use: training_merger->create_starlink($device_name, $site_code, $ping)
@@ -477,7 +474,6 @@ sub create_starlink {
 #     $filename
 # Return:
 #     none
-#
 sub to_database {
     my $self = shift;
     my @date_range = @_;
@@ -488,11 +484,6 @@ sub to_database {
 
     my $JSON = JSON->new->utf8;                                         # prepare JSON object for encoding
     $JSON->convert_blessed(1);
-
-    # $output_hash{sites} = $self->{sites_hash};
-    # $output_hash{routers} = $self->{routers_hash};
-    # $output_hash{aps} = $self->{aps_hash};
-    # $output_hash{starlink} = $self->{starlinks_hash};
 
     my $file_number = 0;
     my $switch_count = 0;

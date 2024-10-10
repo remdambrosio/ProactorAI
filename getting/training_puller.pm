@@ -1,4 +1,3 @@
-#
 # Title: data_puller.pm
 # Authors: Sofiia Khutorna, Rem D'Ambrosio
 # Created: 2024-06-06
@@ -7,13 +6,13 @@
 
 package training_puller;
 
-use alphaAPI;
+use ALPHAAPI;
 use datetime;
 
 # Subroutine Name: new()
 # Example use: training_puller->new()
 # Description:
-#     Creates a training_puller object to pull from APIs
+#     Creates an training_puller object to allow for pulling information from APIs
 # Parameters:
 #     $directory
 # Return:
@@ -25,19 +24,18 @@ sub new {
     };
     bless $self, $class;
     return $self;
-}
-
+}  
 
 sub pull_dates {
     my $self = shift;
     my @date_range = @_;
-    my $alpha = alphaAPI->new(); 
+    my $alpha = ALPHAAPI->new(); 
     my $directory = $self->{directory};
     my $filename = "raw_alpha_data_";
-    my $filetype = ".csv";
+    my $filetype = ".csv"; 
     
     my $datetime = datetime->new();
-    my @dates = $datetime->dates_between(@date_range);
+    my @dates = $datetime->dates_between(@date_range); 
     
     for (my $i = 0; $i < (scalar @dates); $i++) { 
         
@@ -46,9 +44,9 @@ sub pull_dates {
         print("...Pulling " . $date . "...\n");
 
         open ($fh, '>', $directory.$filename.$date.$filetype) or die "Cannot write raw training data file: $!\n";
-        print $fh ($alpha->web_adb('/anonymized/api/call/'));
+        print $fh ($alpha->web_adb('function'));
         print $fh "MAXIMUMS\n";
-        print $fh ($alpha->web_adb('/anonymized/api/call/'));
+        print $fh ($alpha->web_adb('function'));
         close $fh;
         sleep(1);
     }
@@ -62,7 +60,7 @@ sub pull_dates {
     print("...Pulling logs...\n");
 
     open ($file, '>', $directory.$logs_filename.$filetype) or die "Cannot write raw_alpha_logs file: $!\n";
-    print $file ($alpha->web_adb('/anonymized/api/call/'));
+    print $file ($alpha->web_adb('function'));
     close $file;
 }
 
