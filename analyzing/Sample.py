@@ -1,32 +1,22 @@
-#
 # Title: Sample.py
 # Authors: Sofiia Khutorna, Rem D'Ambrosio
 # Created: 2024-06-13
-# Description: 
-# Example:  
-#
+# Description: v0.2 
 
 import numpy as np
 
 class Sample: 
-    def __init__(self,
-                 healthy: bool,
-                 model: int, 
-                 temp_avg: list[float],
-                 temp_max: list[int],
-                 cpu_avg: list[float],
-                 cpu_max: list[int],
-                 latency_avg: list[int],
-                 latency_max: list[int]):
+    def __init__(self, failing: bool, name: str, model: int, temp_avg, temp_max, cpu_avg, cpu_max, latency_avg, latency_max):
         
-        self.healthy = healthy
+        self.failing = failing
+        self.name = name
         
-        if (model == "anon_model_c"):
-            self.model = 0
-        elif (model == "anon_model_j"):
+        if (model == "cisco"):
+            self.model = 0  
+        elif (model == "juniper"):
             self.model = 1
 
-        self.temp_avg = float(np.mean(temp_avg))
+        self.temp_avg = float(np.mean(temp_avg))  
         self.temp_avg_stdev = float(np.std(temp_avg))
         self.temp_avg_slope = self.slope(temp_avg)
         self.temp_max = float(np.max(temp_max))
@@ -46,13 +36,14 @@ class Sample:
         self.latency_max_slope = self.slope(latency_max)
 
 
-    def slope(self, nums: list[int]) -> int:
+    def slope(self, nums) -> int:
         return (nums[-1] - nums[0]) / len(nums)
 
 
     def to_dict(self):
         return {
-            'healthy': self.healthy,
+            'healthy': self.failing,
+            'name': self.name,
             'model': self.model, 
             'temp_avg': self.temp_avg,
             'temp_max': self.temp_max,
@@ -64,13 +55,14 @@ class Sample:
 
 
     def to_array(self):
-        if self.healthy:
-            self.healthy = 1
+        if self.failing:
+            self.failing = 1
         else:
-            self.healthy = 0
+            self.failing = 0
 
         return [
-            self.healthy,
+            self.failing,
+            self.name, 
             self.model,
             self.temp_avg,
             self.temp_max,
@@ -82,8 +74,8 @@ class Sample:
 
     
     def __str__(self):
-        model_str = "anon_model_c" if self.model == 0 else "anon_model_j"
-        return (f"Sample(healthy={self.healthy}, model={model_str}, "
+        model_str = "cisco" if self.model == 0 else "juniper"
+        return (f"Sample(healthy={self.failing}, name={self.name}, model={model_str}, "
                 f"temp_avg={self.temp_avg:.2f}, temp_avg_stdev={self.temp_avg_stdev:.2f}, temp_avg_slope={self.temp_avg_slope:.2f}, "
                 f"temp_max={self.temp_max:.2f}, temp_max_stdev={self.temp_max_stdev:.2f}, temp_max_slope={self.temp_max_slope:.2f}, "
                 f"cpu_avg={self.cpu_avg:.2f}, cpu_avg_stdev={self.cpu_avg_stdev:.2f}, cpu_avg_slope={self.cpu_avg_slope:.2f}, "
