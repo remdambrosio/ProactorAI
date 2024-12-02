@@ -18,9 +18,9 @@ EPOCHS = 2000
 
 def main():
     parser = argparse.ArgumentParser(description='building and training neural network')
-    parser.add_argument('-gr', '--grab', type=bool, help='grab all samples', default=False)
-    parser.add_argument('-tr', '--train', type=bool, help='training regular neural network', default=False)
-    parser.add_argument('-te', '--test', type=bool, help='testing nn model', default=False)
+    parser.add_argument('-gr', '--grab', action='store_true', help='grab all samples')
+    parser.add_argument('-tr', '--train', action='store_true', help='training regular neural network')
+    parser.add_argument('-te', '--test', action='store_true', help='testing nn model')
     args = parser.parse_args()
 
     if args.grab:
